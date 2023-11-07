@@ -1,3 +1,14 @@
+def spawn_target(args)
+  size = 64
+  {
+    x: rand(args.grid.w * 0.4) + args.grid.w * 0.6 - size,
+    y: rand(args.grid.h - size * 2) + size,
+    w: size,
+    h: size,
+    path: 'sprites/target.png',
+  }
+end
+
 def tick args
   args.state.player ||= {
     x: 120,
@@ -8,6 +19,12 @@ def tick args
     path: 'sprites/misc/dragon-0.png',
   }
   args.state.fireballs ||= []
+  args.state.targets ||= [
+    spawn_target(args),
+    spawn_target(args),
+    spawn_target(args),
+  ]
+  args.state.score ||= 0
 
   if args.inputs.left
     args.state.player.x -= args.state.player.speed
@@ -51,8 +68,25 @@ def tick args
 
   args.state.fireballs.each do |fireball|
     fireball.x += args.state.player.speed + 2
+
+    args.state.targets.each do |target|
+      if args.geometry.intersect_rect?(target, fireball)
+        target.dead = true
+        fireball.dead = true
+        args.state.score += 1
+        args.state.targets << spawn_target(args)
+      end
+    end
   end
 
-  args.outputs.sprites << [args.state.player, args.state.fireballs]
-  args.outputs.sprites << args.state.player
+  args.state.targets.reject! { |t| t.dead }
+  args.state.fireballs.reject! { |f| f.dead }
+
+  args.outputs.sprites << [args.state.player, args.state.fireballs, args.state.targets]
+  args.outputs.labels << {
+    x: 40,
+    y: args.grid.h - 40,
+    text: "Score: #{args.state.score}",
+    size_enum: 4
+  }
 end
