@@ -69,6 +69,11 @@ def tick args
   args.state.fireballs.each do |fireball|
     fireball.x += args.state.player.speed + 2
 
+    if fireball.x > args.grid.w
+      fireball.dead = true
+      next
+    end
+
     args.state.targets.each do |target|
       if args.geometry.intersect_rect?(target, fireball)
         target.dead = true
@@ -89,4 +94,14 @@ def tick args
     text: "Score: #{args.state.score}",
     size_enum: 4
   }
+  # args.outputs.debug << {
+  #   x: 40,
+  #   y: args.grid.h - 80,
+  #   text: "Fireballs: #{args.state.fireballs.length}",
+  # }.label!
+  # args.outputs.debug << {
+  #   x: 40,
+  #   y: args.grid.h - 100,
+  #   text: "1st fireball x pos: #{args.state.fireballs.first&.x}",
+  # }.label!
 end
