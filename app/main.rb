@@ -1,7 +1,9 @@
+FPS = 60
+
 def spawn_target(args)
   size = 64
   {
-    x: rand(args.grid.w * 0.4) + args.grid.w * 0.6 - size,
+    x: rand(args.grid.w * 0.4) + args.grid.w * 0.6,
     y: rand(args.grid.h - size * 2) + size,
     w: size,
     h: size,
@@ -9,23 +11,13 @@ def spawn_target(args)
   }
 end
 
-def tick args
-  args.state.player ||= {
-    x: 120,
-    y: 280,
-    w: 100,
-    h: 80,
-    speed: 12,
-    path: 'sprites/misc/dragon-0.png',
-  }
-  args.state.fireballs ||= []
-  args.state.targets ||= [
-    spawn_target(args),
-    spawn_target(args),
-    spawn_target(args),
-  ]
-  args.state.score ||= 0
+def fire_input?(args)
+  args.inputs.keyboard.key_down.z ||
+    args.inputs.keyboard.key_down.j ||
+    args.inputs.controller_one.key_down.a
+end
 
+def handle_player_movement(args)
   if args.inputs.left
     args.state.player.x -= args.state.player.speed
   elsif args.inputs.right
@@ -53,10 +45,61 @@ def tick args
   if args.state.player.y < 0
     args.state.player.y = 0
   end
+end
 
-  if args.inputs.keyboard.key_down.z ||
-    args.inputs.keyboard.key_down.j ||
-    args.inputs.controller_one.key_down.a
+def game_over_tick(args)
+  labels = []
+  labels << {
+    x: 40,
+    y: args.grid.h - 40,
+    text: "Game Over!",
+    size_enum: 10,
+  }
+  labels << {
+    x: 40,
+    y: args.grid.h - 90,
+    text: "Score: #{args.state.score}",
+    size_enum: 4,
+  }
+  labels << {
+    x: 40,
+    y: args.grid.h - 132,
+    text: "Fire to restart",
+    size_enum: 2,
+  }
+  args.outputs.labels << labels
+
+  if args.state.timer < -30 && fire_input?(args)
+    $gtk.reset
+  end
+end
+
+def tick args
+  args.state.player ||= {
+    x: 120,
+    y: 280,
+    w: 100,
+    h: 80,
+    speed: 12,
+    path: 'sprites/misc/dragon-0.png',
+  }
+  args.state.fireballs ||= []
+  args.state.targets ||= [
+    spawn_target(args), spawn_target(args), spawn_target(args)
+  ]
+  args.state.score ||= 0
+  args.state.timer ||= 30 * FPS
+
+  args.state.timer -= 1
+
+  if args.state.timer < 0
+    game_over_tick(args)
+    return
+  end
+
+  handle_player_movement(args)
+
+  if fire_input?(args)
     args.state.fireballs << {
       x: args.state.player.x + args.state.player.w - 12,
       y: args.state.player.y + 10,
@@ -88,20 +131,22 @@ def tick args
   args.state.fireballs.reject! { |f| f.dead }
 
   args.outputs.sprites << [args.state.player, args.state.fireballs, args.state.targets]
-  args.outputs.labels << {
+
+  labels = []
+  labels << {
     x: 40,
     y: args.grid.h - 40,
     text: "Score: #{args.state.score}",
-    size_enum: 4
+    size_enum: 4,
   }
-  # args.outputs.debug << {
-  #   x: 40,
-  #   y: args.grid.h - 80,
-  #   text: "Fireballs: #{args.state.fireballs.length}",
-  # }.label!
-  # args.outputs.debug << {
-  #   x: 40,
-  #   y: args.grid.h - 100,
-  #   text: "1st fireball x pos: #{args.state.fireballs.first&.x}",
-  # }.label!
+  labels << {
+    x: args.grid.w - 40,
+    y: args.grid.h - 40,
+    text: "Time Left: #{(args.state.timer / FPS).round}",
+    size_enum: 2,
+    alignment_enum: 2,
+  }
+  args.outputs.labels << labels
 end
+
+$gtk.reset
