@@ -98,6 +98,10 @@ def game_over_tick(args)
 end
 
 def tick args
+  if args.state.tick_count == 1
+    args.audio[:music] = { input: "sounds/flight.ogg", looping: true }
+  end
+
   args.state.player ||= {
     x: 120,
     y: 280,
@@ -115,6 +119,11 @@ def tick args
 
   args.state.timer -= 1
 
+  if args.state.timer == 0
+    args.audio[:music].paused = true
+    args.outputs.sounds << "sounds/game-over.wav"
+  end
+
   if args.state.timer < 0
     game_over_tick(args)
     return
@@ -123,6 +132,7 @@ def tick args
   handle_player_movement(args)
 
   if fire_input?(args)
+    args.outputs.sounds << "sounds/fireball.wav"
     args.state.fireballs << {
       x: args.state.player.x + args.state.player.w - 12,
       y: args.state.player.y + 10,
@@ -142,6 +152,7 @@ def tick args
 
     args.state.targets.each do |target|
       if args.geometry.intersect_rect?(target, fireball)
+        args.outputs.sounds << "sounds/target.wav"
         target.dead = true
         fireball.dead = true
         args.state.score += 1
@@ -170,6 +181,8 @@ def tick args
     alignment_enum: 2,
   }
   args.outputs.labels << labels
+
+  # args.outputs.sounds << "sounds/fireball.wav"
 end
 
 $gtk.reset
