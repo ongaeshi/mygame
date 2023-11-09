@@ -89,6 +89,16 @@ def title_tick args
     size_enum: 2,
   }
   args.outputs.labels << labels
+
+  args.state.title_player ||= {
+    x: 120,
+    y: 280,
+    w: 100,
+    h: 80,
+  }
+  player_sprite_index = 0.frame_index(count: 6, hold_for: 8, repeat: true)
+  args.state.title_player.path = "sprites/misc/dragon-#{player_sprite_index}.png"
+  args.outputs.sprites << args.state.title_player
 end
 
 HIGH_SCORE_FILE = "high-score.txt"
