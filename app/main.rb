@@ -102,6 +102,16 @@ def tick args
     args.audio[:music] = { input: "sounds/flight.ogg", looping: true }
   end
 
+  args.outputs.solids << {
+    x: 0,
+    y: 0,
+    w: args.grid.w,
+    h: args.grid.h,
+    r: 92,
+    g: 120,
+    b: 230,
+  }
+  
   args.state.player ||= {
     x: 120,
     y: 280,
