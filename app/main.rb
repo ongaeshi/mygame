@@ -47,9 +47,49 @@ def handle_player_movement(args)
   end
 end
 
+def title_tick args
+  if fire_input?(args)
+    args.outputs.sounds << "sounds/game-over.wav"
+    args.state.scene = "gameplay"
+    return
+  end
+
+  labels = []
+  labels << {
+    x: 40,
+    y: args.grid.h - 40,
+    text: "Target Practice",
+    size_enum: 6,
+  }
+  labels << {
+    x: 40,
+    y: args.grid.h - 88,
+    text: "Hit the targets!",
+  }
+  labels << {
+    x: 40,
+    y: args.grid.h - 120,
+    text: "by YOU",
+  }
+  labels << {
+    x: 40,
+    y: 120,
+    text: "Arrows or WASD to move | Z or J to fire | gamepad works too",
+  }
+  labels << {
+    x: 40,
+    y: 80,
+    text: "Fire to start",
+    size_enum: 2,
+  }
+  args.outputs.labels << labels
+end
+
 HIGH_SCORE_FILE = "high-score.txt"
 def game_over_tick(args)
   args.state.high_score ||= args.gtk.read_file(HIGH_SCORE_FILE).to_i
+
+  args.state.timer -= 1
 
   if !args.state.saved_high_score && args.state.score > args.state.high_score
     args.gtk.write_file(HIGH_SCORE_FILE, args.state.score.to_s)
@@ -69,12 +109,7 @@ def game_over_tick(args)
     text: "Score: #{args.state.score}",
     size_enum: 4,
   }
-  labels << {
-    x: 40,
-    y: args.grid.h - 132,
-    text: "Fire to restart",
-    size_enum: 2,
-  }
+
   if args.state.score > args.state.high_score
     labels << {
       x: 260,
@@ -90,6 +125,13 @@ def game_over_tick(args)
       size_enum: 3,
     }
   end
+
+  labels << {
+    x: 40,
+    y: args.grid.h - 132,
+    text: "Fire to restart",
+    size_enum: 2,
+  }
   args.outputs.labels << labels
 
   if args.state.timer < -30 && fire_input?(args)
@@ -97,11 +139,7 @@ def game_over_tick(args)
   end
 end
 
-def tick args
-  if args.state.tick_count == 1
-    args.audio[:music] = { input: "sounds/flight.ogg", looping: true }
-  end
-
+def gameplay_tick(args)
   args.outputs.solids << {
     x: 0,
     y: 0,
@@ -126,7 +164,6 @@ def tick args
     16
   end
   player_sprite_index = 0.frame_index(count: 6, hold_for: hold_for, repeat: true)
-  # args.outputs.labels << { x: 0+100, y: args.state.player.y, text: "player_sprite_index: #{player_sprite_index}" }
   args.state.player.path = "sprites/misc/dragon-#{player_sprite_index}.png"
 
   args.state.fireballs ||= []
@@ -141,10 +178,7 @@ def tick args
   if args.state.timer == 0
     args.audio[:music].paused = true
     args.outputs.sounds << "sounds/game-over.wav"
-  end
-
-  if args.state.timer < 0
-    game_over_tick(args)
+    args.state.scene = "game_over"
     return
   end
 
@@ -200,8 +234,14 @@ def tick args
     alignment_enum: 2,
   }
   args.outputs.labels << labels
-
-  # args.outputs.sounds << "sounds/fireball.wav"
 end
 
-$gtk.reset
+def tick args
+  if args.state.tick_count == 1
+    args.audio[:music] = { input: "sounds/flight.ogg", looping: true }
+  end
+
+  args.state.scene ||= "title"
+
+  send("#{args.state.scene}_tick", args)
+end
