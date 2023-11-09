@@ -51,6 +51,17 @@ def goto_gameplay_scene(args)
   args.audio[:music].paused = false
   args.state.score = 0
   args.state.timer = 30 * FPS
+  args.state.player = {
+    x: 120,
+    y: 280,
+    w: 100,
+    h: 80,
+    speed: 12,
+  }
+  args.state.fireballs = []
+  args.state.targets = [
+    spawn_target(args), spawn_target(args), spawn_target(args)
+  ]
   args.state.scene = "gameplay"
 end
 
@@ -167,14 +178,6 @@ def gameplay_tick(args)
     b: 230,
   }
 
-  args.state.player ||= {
-    x: 120,
-    y: 280,
-    w: 100,
-    h: 80,
-    speed: 12,
-  }
-
   hold_for = if args.inputs.left || args.inputs.right || args.inputs.up || args.inputs.down
     8
   else
@@ -182,13 +185,6 @@ def gameplay_tick(args)
   end
   player_sprite_index = 0.frame_index(count: 6, hold_for: hold_for, repeat: true)
   args.state.player.path = "sprites/misc/dragon-#{player_sprite_index}.png"
-
-  args.state.fireballs ||= []
-  args.state.targets ||= [
-    spawn_target(args), spawn_target(args), spawn_target(args)
-  ]
-  args.state.score ||= 0
-  args.state.timer ||= 30 * FPS
 
   args.state.timer -= 1
 
