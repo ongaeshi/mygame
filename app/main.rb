@@ -47,10 +47,16 @@ def handle_player_movement(args)
   end
 end
 
+def goto_gameplay_scene(args)
+  args.audio[:music].paused = false
+  args.state.score = 0
+  args.state.timer = 30 * FPS
+  args.state.scene = "gameplay"
+end
+
 def title_tick args
   if fire_input?(args)
-    args.outputs.sounds << "sounds/game-over.wav"
-    args.state.scene = "gameplay"
+    goto_gameplay_scene(args)
     return
   end
 
@@ -135,7 +141,8 @@ def game_over_tick(args)
   args.outputs.labels << labels
 
   if args.state.timer < -30 && fire_input?(args)
-    $gtk.reset
+    goto_gameplay_scene(args)
+    return
   end
 end
 
