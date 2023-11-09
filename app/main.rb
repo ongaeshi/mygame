@@ -111,15 +111,24 @@ def tick args
     g: 120,
     b: 230,
   }
-  
+
   args.state.player ||= {
     x: 120,
     y: 280,
     w: 100,
     h: 80,
     speed: 12,
-    path: 'sprites/misc/dragon-0.png',
   }
+
+  hold_for = if args.inputs.left || args.inputs.right || args.inputs.up || args.inputs.down
+    8
+  else
+    16
+  end
+  player_sprite_index = 0.frame_index(count: 6, hold_for: hold_for, repeat: true)
+  # args.outputs.labels << { x: 0+100, y: args.state.player.y, text: "player_sprite_index: #{player_sprite_index}" }
+  args.state.player.path = "sprites/misc/dragon-#{player_sprite_index}.png"
+
   args.state.fireballs ||= []
   args.state.targets ||= [
     spawn_target(args), spawn_target(args), spawn_target(args)
